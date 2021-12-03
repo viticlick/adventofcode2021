@@ -1,25 +1,71 @@
-matrix = []
-File.foreach(ARGV.first) { |line| matrix << line.strip.chars.map(&:to_i) }
-ammount_columns = matrix.transpose.map(&:sum)
-cut_value = matrix.length / 2
+class BinaryDiagnostic
+
+  def initialize(file)
+    @matrix = []
+    File.foreach(ARGV.first) { |line| @matrix << line.strip.chars.map(&:to_i) }
+  end
+
+  def gamma
+    simple_calculator { |sum_bit, discriminator| sum_bit > discriminator ? 1 : 0 }
+  end
+
+  def epsilon
+    simple_calculator { |sum_bit, discriminator| sum_bit > discriminator ? 0 : 1 }
+  end
+
+  def oxygen_generator
+    generator { |bit_sum, discriminator| bit_sum >= discriminator ? 1 : 0 }
+  end
+
+  def co2_generator
+    generator { |bit_sum, discriminator| bit_sum < discriminator ? 1 : 0 }
+  end
+
+  private
+
+  def simple_calculator
+    discriminator = @matrix.length / 2.0
+    array = sum_bits(@matrix).map  { |x| yield(x, discriminator) }
+    array.join.to_i(2)
+  end
+
+  def generator
+    matrix = Array.new(@matrix)
+    column = 0 
+    while matrix.length > 1
+      discriminator = matrix.length / 2.0
+      bit_sum = sum_column(matrix,column)
+      bit_criteria = yield(bit_sum, discriminator)
+      matrix = filter_by_column(matrix, column, bit_criteria)
+      column += 1
+    end
+    matrix.first.join.to_i(2)
+  end
+
+  def sum_bits(matrix)
+    matrix.transpose.map(&:sum)
+  end
 
 
-gamma_array = ammount_columns.map { |x| x > cut_value ? 1 : 0 } 
-gamma = gamma_array.join.to_i(2)
+  def sum_column(matrix, column)
+    matrix.inject(0) { |sum, row| sum + row[column] }
+  end
 
-epsilon_array = ammount_columns.map { |x| x > cut_value ? 0 : 1 } 
-epsilon = epsilon_array.join.to_i(2)
+  def filter_by_column(matrix, column, bit)
+    matrix.select { |line| line[column] == bit }
+  end
 
-oxygen_generator_bit_criteria  = ammount_columns.first >= cut_value ? 1 : 0
-co2_scrubber_bit_criteria = ammount_columns.first >= cut_value ? 0 : 1
+end
 
-puts matrix.select { |line| line.first == oxygen_generator_bit_criteria }
+binary_diagnostic = BinaryDiagnostic.new(ARGV.first)
 
-puts "gamma arrary #{gamma_array}"
-puts "oxygen bit: #{oxygen_generator_bit_criteria}"
-puts "co2 bit: #{co2_scrubber_bit_criteria}"
-
-puts "gamma: #{gamma} , epsilon: #{epsilon}"
+puts "gamma: #{binary_diagnostic.gamma} , epsilon: #{binary_diagnostic.epsilon}"
+puts "solution 1: #{ binary_diagnostic.gamma * binary_diagnostic.epsilon }"
 
 puts "-"*30
-puts "solution 1: #{ gamma * epsilon }"
+
+oxygen = binary_diagnostic.oxygen_generator
+co2 = binary_diagnostic.co2_generator
+
+puts "oxygen: #{oxygen}, co2: #{co2}"
+puts "solution 2: #{oxygen * co2}"
