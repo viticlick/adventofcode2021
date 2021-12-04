@@ -89,6 +89,14 @@ drawn_numbers.each do |number|
         puts "Solution 1: #{number.value * board.unmarked_sum}" 
         first_solution_found = true
       end
+      if boards.length > 1
+        boards.delete(board)
+      else
+        puts "-Winer line with number #{number.value}"
+        puts "-unmarked sum values: #{board.unmarked_sum}" 
+        puts "Solution 2: #{number.value * board.unmarked_sum}" 
+        boards.delete(board)
+      end
     end
   end
 end
